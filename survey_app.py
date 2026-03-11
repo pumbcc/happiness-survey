@@ -1,25 +1,32 @@
 import streamlit as st
+from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 from datetime import datetime
-import os
 
 # 1. ตั้งค่าหน้าเว็บ
 st.set_page_config(page_title="แบบวัดสุขภาวะองค์กร", layout="centered")
 
-# ตกแต่งสไตล์ด้วย CSS (เลียนแบบโทนเขียว Food Passion ที่คุณปุ้มใช้)
+# --- ใส่ URL ของ Google Sheets ของคุณปุ้มตรงนี้ ---
+SHEET_URL = "ใส่_URL_ของ_Google_Sheets_ที่คุณปุ้มก๊อปปี้มา_ที่นี่ครับ"
+
+# เชื่อมต่อกับ Google Sheets
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+# ตกแต่งสไตล์ด้วย CSS (เลียนแบบโทนเขียว GAS เดิมของคุณปุ้ม)
 st.markdown("""
     <style>
     .main { background-color: #f4f7f6; }
-    .stButton>button { width: 100%; border-radius: 20px; background-color: #228B22; color: white; }
+    .stButton>button { width: 100%; border-radius: 20px; background-color: #228B22; color: white; height: 3em; font-weight: bold; }
     .header-box { background: linear-gradient(135deg, #006400 0%, #228B22 100%); color: white; padding: 30px; border-radius: 0 0 30px 30px; text-align: center; margin-bottom: 20px; }
+    .stRadio > div { background-color: white; padding: 10px; border-radius: 10px; border: 1px solid #edf2f0; }
     </style>
     <div class="header-box">
-        <h1>แบบวัดสุขภาวะทางปัญญาคนวัยทำงาน</h1>
-        <p>คำตอบของท่านจะถูกเก็บเป็นความลับเพื่อใช้พัฒนาองค์กร</p>
+        <h1 style='color: white;'>แบบวัดสุขภาวะทางปัญญาคนวัยทำงาน</h1>
+        <p style='color: #e0e0e0;'>คำตอบของท่านจะถูกเก็บเป็นความลับเพื่อใช้พัฒนาองค์กร</p>
     </div>
     """, unsafe_allow_html=True)
 
-# 2. เตรียมรายการคำถาม (ดึงมาจากโค้ด GAS ของคุณปุ้ม)
+# 2. เตรียมรายการคำถาม
 part1_qs = [
     "ท่านเห็นว่าตนเองมีอะไรหลายอย่างที่น่าภาคภูมิใจ", "ท่านคิดว่าชีวิตของท่านมีคุณค่า", "ท่านรู้ว่าอะไรคือคุณค่าที่แท้จริงของชีวิต",
     "ท่านเข้าใจว่าอะไรคือแก่นธรรมของศาสนา", "ท่านให้ความเป็นมิตรกับผู้อื่น", "ท่านให้ความสำคัญต่อความรู้สึกและความต้องการของผู้อื่น",
@@ -50,58 +57,63 @@ part2_qs = [
 
 # 3. เริ่มสร้างฟอร์ม
 with st.form("happiness_survey", clear_on_submit=True):
-    st.subheader("📋 ข้อมูลทั่วไป")
+    st.markdown("### 📋 ข้อมูลทั่วไป")
     c1, c2, c3 = st.columns(3)
-    gender = c1.selectbox("เพศ", ["ชาย", "หญิง"])
-    age = c2.number_input("อายุ (ปี)", min_value=15, max_value=80, value=30)
-    status = c3.selectbox("สถานภาพ", ["โสด", "สมรส", "หย่าร้าง/แยกกันอยู่"])
+    with c1: gender = st.selectbox("เพศ", ["ชาย", "หญิง"])
+    with c2: age = st.number_input("อายุ (ปี)", min_value=15, max_value=80, value=30)
+    with c3: status = st.selectbox("สถานภาพ", ["โสด", "สมรส", "หย่าร้าง/แยกกันอยู่"])
     
     c4, c5, c6 = st.columns(3)
-    religion = c4.selectbox("ศาสนา", ["พุทธ", "คริสต์", "อิสลาม", "อื่นๆ"])
-    edu = c5.selectbox("ระดับการศึกษา", ["ต่ำกว่าปริญญาตรี", "ปริญญาตรี", "สูงกว่าปริญญาตรี"])
-    job_age = c6.number_input("อายุงาน (ปี)", min_value=0.0, step=0.1)
+    with c4: religion = st.selectbox("ศาสนา", ["พุทธ", "คริสต์", "อิสลาม", "อื่นๆ"])
+    with c5: edu = st.selectbox("ระดับการศึกษา", ["ต่ำกว่าปริญญาตรี", "ปริญญาตรี", "สูงกว่าปริญญาตรี"])
+    with c6: job_age = st.number_input("อายุงาน (ปี)", min_value=0.0, step=0.1)
     
     pos = st.selectbox("ระดับตำแหน่งงาน", ["Staff - Head Staff", "Associate - Professional", "Specialist - Sr. Specialist", "ADM - AHO"])
 
     st.divider()
     
     # ส่วนที่ 1 (38 ข้อ)
-    st.subheader("ส่วนที่ 1: แบบประเมินสิ่งที่ท่านรู้สึก (38 ข้อ)")
+    st.markdown("### ส่วนที่ 1: แบบประเมินสิ่งที่ท่านรู้สึก (38 ข้อ)")
+    st.caption("1 = น้อยที่สุด, 5 = มากที่สุด")
     feel_responses = {}
     for i, q in enumerate(part1_qs, 1):
-        feel_responses[f"Feel_{i}"] = st.radio(f"{i}. {q}", [1, 2, 3, 4, 5], index=2, horizontal=True)
+        feel_responses[f"Feel_{i}"] = st.radio(f"{i}. {q}", [1, 2, 3, 4, 5], index=None, horizontal=True)
 
     st.divider()
 
     # ส่วนที่ 2 (16 ข้อ)
-    st.subheader("ส่วนที่ 2: แบบประเมินสิ่งที่ท่านได้รับจากบริษัทฯ (16 ข้อ)")
+    st.markdown("### ส่วนที่ 2: แบบประเมินสิ่งที่ท่านได้รับจากบริษัทฯ (16 ข้อ)")
     corp_responses = {}
     for i, q in enumerate(part2_qs, 1):
-        corp_responses[f"Corp_{i}"] = st.radio(f"{i}. {q}", [1, 2, 3, 4, 5], index=2, horizontal=True)
+        corp_responses[f"Corp_{i}"] = st.radio(f"{i}. {q}", [1, 2, 3, 4, 5], index=None, horizontal=True)
 
-    # ปุ่มส่งข้อมูล
+    st.divider()
     submit_btn = st.form_submit_button("ส่งแบบสอบถาม")
 
-# 4. การจัดการเมื่อกดส่ง (Process Form)
+# 4. การจัดการเมื่อกดส่งข้อมูล
 if submit_btn:
-    # รวบรวมข้อมูลทั้งหมดลงใน Dictionary
-    data = {
-        "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "เพศ": gender, "อายุ": age, "สถานภาพ": status, "ศาสนา": religion,
-        "ระดับการศึกษา": edu, "อายุงาน": job_age, "ระดับตำแหน่งงาน": pos
-    }
-    data.update(feel_responses)
-    data.update(corp_responses)
-
-    # บันทึกลงไฟล์ CSV
-    file_name = "survey_responses.csv"
-    df = pd.DataFrame([data])
-    
-    # ถ้ามีไฟล์อยู่แล้วให้เพิ่มต่อท้าย (append), ถ้าไม่มีให้สร้างใหม่พร้อมหัวตาราง
-    if not os.path.isfile(file_name):
-        df.to_csv(file_name, index=False, encoding='utf-8-sig')
+    # เช็คว่าตอบครบหรือยัง (เบื้องต้น)
+    if None in feel_responses.values() or None in corp_responses.values():
+        st.error("กรุณาตอบคำถามให้ครบทุกข้อก่อนส่งครับ")
     else:
-        df.to_csv(file_name, mode='a', index=False, header=False, encoding='utf-8-sig')
-    
-    st.balloons()
-    st.success("ขอบคุณครับ! ข้อมูลของคุณถูกบันทึกเรียบร้อยแล้ว (ไฟล์ survey_responses.csv)")
+        with st.spinner('กำลังบันทึกข้อมูลลง Google Sheets...'):
+            # รวมข้อมูล
+            data = {
+                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "เพศ": gender, "อายุ": age, "สถานภาพ": status, "ศาสนา": religion,
+                "ระดับการศึกษา": edu, "อายุงาน": job_age, "ระดับตำแหน่งงาน": pos
+            }
+            data.update(feel_responses)
+            data.update(corp_responses)
+
+            try:
+                # อ่านข้อมูลเดิมและบันทึกใหม่
+                existing_data = conn.read(spreadsheet=SHEET_URL)
+                updated_df = pd.concat([existing_data, pd.DataFrame([data])], ignore_index=True)
+                conn.update(spreadsheet=SHEET_URL, data=updated_df)
+                
+                st.balloons()
+                st.success("ขอบคุณครับ! บันทึกข้อมูลเรียบร้อยแล้ว")
+            except Exception as e:
+                st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
+                st.info("ตรวจสอบว่าคุณได้แชร์ Sheets ให้ 'Anyone with the link can edit' หรือยัง?")
