@@ -7,7 +7,7 @@ from datetime import datetime
 st.set_page_config(page_title="แบบวัดสุขภาวะองค์กร", layout="centered")
 
 # --- ใส่ URL ของ Google Sheets ของคุณปุ้มตรงนี้ ---
-SHEET_URL = "ใส่_URL_ของ_Google_Sheets_ที่คุณปุ้มก๊อปปี้มา_ที่นี่ครับ"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1RLgmIBfARmXnqZU6kidQV3Ta9sIxQpmQuWCrXMteLF0/edit?usp=sharing"
 
 # เชื่อมต่อกับ Google Sheets
 conn = st.connection("gsheets", type=GSheetsConnection)
