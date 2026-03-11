@@ -92,12 +92,10 @@ with st.form("happiness_survey", clear_on_submit=True):
 
 # 4. การจัดการเมื่อกดส่งข้อมูล
 if submit_btn:
-    # เช็คว่าตอบครบหรือยัง (เบื้องต้น)
     if None in feel_responses.values() or None in corp_responses.values():
         st.error("กรุณาตอบคำถามให้ครบทุกข้อก่อนส่งครับ")
     else:
-        with st.spinner('กำลังบันทึกข้อมูลลง Google Sheets...'):
-            # รวมข้อมูล
+        with st.spinner('กำลังบันทึกข้อมูล...'):
             data = {
                 "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "เพศ": gender, "อายุ": age, "สถานภาพ": status, "ศาสนา": religion,
@@ -107,13 +105,18 @@ if submit_btn:
             data.update(corp_responses)
 
             try:
-                # อ่านข้อมูลเดิมและบันทึกใหม่
-                existing_data = conn.read(spreadsheet=SHEET_URL)
-                updated_df = pd.concat([existing_data, pd.DataFrame([data])], ignore_index=True)
+                # ลองอ่านข้อมูลดูก่อน
+                try:
+                    existing_data = conn.read(spreadsheet=SHEET_URL)
+                    updated_df = pd.concat([existing_data, pd.DataFrame([data])], ignore_index=True)
+                except:
+                    # ถ้าอ่านไม่ได้ (Sheets ว่าง) ให้เอาข้อมูลปัจจุบันเป็นตัวตั้งเลย
+                    updated_df = pd.DataFrame([data])
+
+                # บันทึกกลับ
                 conn.update(spreadsheet=SHEET_URL, data=updated_df)
                 
                 st.balloons()
-                st.success("ขอบคุณครับ! บันทึกข้อมูลเรียบร้อยแล้ว")
+                st.success("บันทึกข้อมูลเรียบร้อยแล้ว!")
             except Exception as e:
-                st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
-                st.info("ตรวจสอบว่าคุณได้แชร์ Sheets ให้ 'Anyone with the link can edit' หรือยัง?")
+                st.error(f"เกิดข้อผิดพลาด: {e}")
