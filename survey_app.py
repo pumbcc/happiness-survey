@@ -5,81 +5,101 @@ from datetime import datetime
 # 1. ตั้งค่าหน้าเว็บ
 st.set_page_config(page_title="แบบวัดสุขภาวะองค์กร", layout="centered")
 
-# --- ระบบจัดการข้อมูลชั่วคราว ---
+# --- ระบบจัดการข้อมูล ---
 if 'responses' not in st.session_state:
     st.session_state.responses = []
 if 'page' not in st.session_state:
     st.session_state.page = 1
 
-# --- 🎨 ปรับปรุง CSS ใหม่ทั้งหมด (บังคับสีและหน้าตาให้เป๊ะ) ---
-st.markdown("""
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+# --- 🛠 CSS ชุดใหญ่: เปลี่ยน Radio เป็นปุ่มกดแบบ GAS ---
+st.html("""
     <style>
-    /* บังคับฟอนต์และพื้นหลัง */
-    html, body, [data-testid="stAppViewContainer"], .main {
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap');
+    
+    /* 1. บังคับสีพื้นหลังของทั้งหน้าให้เป็นสีขาวนวลเสมอ */
+    [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main {
         background-color: #f4f7f6 !important;
-        font-family: 'Sarabun', sans-serif !important;
     }
 
-    /* กล่องหัวข้อบนสุด */
+    /* 2. บังคับสีฟอนต์ทุกจุดให้เป็นสีดำเข้ม (แก้ปัญหาฟอนต์จม) */
+    p, span, label, h1, h2, h3, h4, .stMarkdown, div, .q-text {
+        color: #1A1A1A !important;
+    }
+
+    /* 3. Header Box: บังคับเขียว ขาว */
     .header-box { 
-        background: linear-gradient(135deg, #006400 0%, #228B22 100%); 
-        color: white !important; 
+        background: linear-gradient(135deg, #006400 0%, #228B22 100%) !important; 
         padding: 40px 20px; 
         border-radius: 0 0 40px 40px; 
         text-align: center; 
-        margin: -60px -20px 30px -20px;
+        margin-bottom: 30px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    .header-box h1 { color: white !important; font-weight: 600; margin-bottom: 5px; }
-    .header-box p { color: rgba(255,255,255,0.8) !important; margin: 0; }
+    .header-box h1, .header-box p { color: #FFFFFF !important; }
 
-    /* การ์ดคำถาม */
+    /* 4. การ์ดคำถาม: ต้องพื้นขาว ฟอนต์ดำ */
     .question-card { 
-        background-color: #ffffff; 
+        background-color: #FFFFFF !important; 
         padding: 20px; 
         border-radius: 12px; 
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-        margin-bottom: 15px; 
-        border-left: 6px solid #228B22;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+        margin-bottom: 10px; 
+        border-left: 6px solid #228B22 !important;
     }
-    .question-text { color: #333 !important; font-weight: 600; font-size: 1.05rem; margin-bottom: 10px; }
+    .q-text { font-weight: 600 !important; font-size: 1.1rem !important; }
 
-    /* ปรับแต่งปุ่ม Next/Back ให้ฟอนต์ขาวชัดเจน */
+    /* 5. แก้ไข Dropdown (Selectbox) ให้มองเห็นชัด */
+    div[data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+        color: #1A1A1A !important;
+        border: 1px solid #D1D1D1 !important;
+    }
+
+    /* 6. ปุ่ม Next/Back: ฟอนต์ขาวเท่านั้น */
     .stButton > button {
-        border-radius: 30px !important;
-        padding: 12px 40px !important;
         background-color: #228B22 !important;
-        color: #ffffff !important; /* บังคับฟอนต์ขาว */
+        border-radius: 30px !important;
+        height: 55px !important;
+        width: 100% !important;
         border: none !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-        transition: 0.3s;
-        width: 100%;
     }
-    .stButton > button p { color: #ffffff !important; } /* กันฟอนต์จมในบาง Browser */
+    .stButton > button p {
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+        font-size: 1.2rem !important;
+    }
 
-    /* ปรับปรุง Radio Button ให้กดยืนยันง่ายขึ้น (สไตล์ Button Group) */
-    div[data-testid="stWidgetLabel"] { display: none; } /* ซ่อน Label ขยะ */
-    div[data-testid="stHorizontalBlock"] { gap: 5px !important; }
+    /* 7. Radio Buttons (ปุ่ม 1-5) */
+    div[data-testid="stRadio"] label {
+        background-color: #E8F5E9 !important; /* เขียวอ่อนๆ */
+        color: #1A1A1A !important;
+        border: 1px solid #C8E6C9 !important;
+        padding: 15px !important;
+        border-radius: 10px !important;
+    }
     
-    /* ซ่อน CSS Code ไม่ให้โชว์บนจอ */
-    div[data-testid="stMarkdownContainer"] pre { display: none !important; }
-    </style>
+    /* เมื่อกดเลือกปุ่ม 1-5 */
+    div[data-testid="stRadio"] input:checked + div {
+        background-color: #228B22 !important;
+        color: #FFFFFF !important;
+    }
 
+    /* ซ่อน CSS Code ที่ชอบหลุดออกมา */
+    pre, code { display: none !important; }
+    </style>
+    
     <div class="header-box">
         <h1>แบบวัดสุขภาวะทางปัญญา</h1>
-        <p>คำตอบของท่านจะถูกเก็บเป็นความลับเพื่อใช้พัฒนาองค์กร</p>
+        <p>เพื่อความสุขในการทำงานอย่างยั่งยืน</p>
     </div>
-    """, unsafe_allow_html=True)
-
-# รายการคำถาม (พยายามใช้รายการเดิมของคุณปุ้ม)
+""")
+# รายการคำถาม
 p1_qs = ["ท่านเห็นว่าตนเองมีอะไรหลายอย่างที่น่าภาคภูมิใจ", "ท่านคิดว่าชีวิตของท่านมีคุณค่า", "ท่านรู้ว่าอะไรคือคุณค่าที่แท้จริงของชีวิต", "ท่านเข้าใจว่าอะไรคือแก่นธรรมของศาสนา", "ท่านให้ความเป็นมิตรกับผู้อื่น", "ท่านให้ความสำคัญต่อความรู้สึกและความต้องการของผู้อื่น", "ท่านปรารถนาอยากจะช่วยให้ผู้อื่นพ้นความทุกข์", "ท่านเห็นความสำคัญกับการได้ช่วยเหลือผู้อื่น", "ท่านเข้าใจว่าตนเองเป็นส่วนหนึ่งและมีความสัมพันธ์เชื่อมโยงกับธรรมชาติ", "ท่านรู้สึกรักในธรรมชาติ", "ท่านได้ใช้ศักยภาพอย่างเต็มที่ ในการทำงานและดำเนินชีวิตอยู่", "ท่านทำสิ่งที่ท่านสนใจหรือให้คุณค่า แม้ว่าสิ่งนั้นจะเป็นสิ่งที่ยาก", "ท่านตั้งใจรับฟังคนที่พูดกับท่านได้จนจบ โดยไม่ตัดสินหรือพูดแทรกขึ้นมา", "ท่านแบ่งเวลาไปทำประโยชน์ให้ผู้อื่นโดยไม่ได้รับสิ่งตอบแทน", "ท่านรู้และตามทันอารมณ์ในใจของตนเอง ก่อนที่จะแสดงมันออกมา", "ท่านควบคุมอารมณ์ของตนเองได้ ก่อนที่จะแสดงออกมา", "ท่านสามารถน้อมรับฟังความคิดเห็น หรือคำวิจารณ์จากผู้อื่นได้", "ท่านให้อภัยตนเองได้", "ท่านยอมรับข้อดีและข้อด้อยของตัวเองโดยไม่ปฏิเสธมัน", "ท่านรู้สึกแจ่มใสเบิกบานในชีวิต", "โดยทั่วไปท่านมีความรู้สึกผ่อนคลาย สบายใจ", "ท่านรับรู้คุณค่าในชีวิตของท่านและดำเนินชีวิตเพื่อสิ่งนั้น", "ท่านทำงานโดยเอาคุณค่าของงานเป็นตัวจูงใจ ไม่ใช่เงินทองหรือสิ่งที่จะได้รับเป็นการตอบแทน", "ท่านรับรู้และยอมรับในข้อดีและข้อด้อยของผู้อื่นได้ด้วยความเข้าใจ", "ท่านรู้สึกชื่นชมและขอบคุณในความดีของผู้อื่นและสรรพสิ่งรอบตัว", "ท่านมีความเข้าอกเข้าใจในความรู้สึกของผู้อื่นได้ แม้ว่าท่านจะไม่เห็นด้วยกับสิ่งที่คนๆ นั้น", "ท่านเห็นคุณค่าในตัวเองอย่างที่ท่านเป็น", "ท่านให้อภัยในความผิดพลาดของตนเองได้", "ท่านให้อภัยในความผิดพลาดของผู้อื่นได้", "ท่านพร้อมเสมอที่จะเสียสละส่วนตนเพื่อประโยชน์ของส่วนรวม", "ท่านหมั่นพัฒนาความรักความเมตตาต่อผู้อื่นให้เพิ่มมากขึ้น", "ท่านมีเพื่อนหรือมีกลุ่มที่มีความสัมพันธ์ที่ดีต่อกัน", "ท่านมีเพื่อนหรือมีผู้ที่ท่านไว้ใจที่สามารถบอกกล่าวความรู้สึกลึกๆ ในใจแก่กันได้", "ท่านอ่านหนังสือหรือรับฟังคำสอนที่เกี่ยวข้องกับหลักคุณงามความดีหรือหลักศาสนา", "ท่านหาโอกาสทำสิ่งต่างๆ ที่เอื้ออำนวยให้เกิดประโยชน์แก่ผู้อื่น", "ท่านหาเวลาที่จะอยู่ใกล้ชิดกับธรรมชาติ เช่น ต้นไม้ใบหญ้า ท้องฟ้า สรรพสัตว์ต่างๆ", "ท่านรับรู้และยอมรับความทุกข์ในชีวิต และทำความเข้าใจกับมัน", "ท่านเป็นส่วนหนึ่งของกิจกรรมสร้างสรรค์สังคมที่เป็นธรรม หรือสิ่งแวดล้อมที่ปลอดภัย"]
 p2_qs = ["บริษัทสนับสนุนความก้าวหน้าในสายอาชีพ", "ระบบการสื่อสารภายในบริษัทมีความชัดเจน", "สวัสดิการของบริษัทครอบคลุมความต้องการ", "หัวหน้างานให้การสนับสนุนและคำปรึกษาที่ดี", "บรรยากาศการทำงานส่งเสริมความร่วมมือ", "บริษัทให้ความสำคัญกับความสมดุลชีวิตและการทำงาน", "มีการยกย่องชมเชยเมื่อทำผลงานได้ดี", "บริษัทจัดกิจกรรมสร้างความสัมพันธ์ที่น่าสนใจ", "สภาพแวดล้อมในที่ทำงานมีความปลอดภัยและเหมาะสม", "อุปกรณ์และเครื่องมือทำงานมีความพร้อม", "นโยบายบริษัทมีความเป็นธรรมและโปร่งใส", "บริษัทรับฟังความคิดเห็นของพนักงาน", "เงินเดือนและค่าตอบแทนมีความเหมาะสม", "บริษัทมีเป้าหมายการดำเนินงานที่ชัดเจน", "เพื่อนร่วมงานมีความเป็นมิตรและช่วยเหลือกัน", "ภาพรวมของบริษัททำให้ท่านมีความสุขในการทำงาน"]
 
-# --- หน้าที่ 1: ข้อมูลทั่วไป ---
+# --- หน้าที่ 1 ---
 if st.session_state.page == 1:
-    st.markdown('<p style="color:#228B22; font-weight:bold; font-size:1.2rem;">📝 ขั้นตอนที่ 1: ข้อมูลทั่วไป</p>', unsafe_allow_html=True)
+    st.subheader("📝 ข้อมูลทั่วไป")
     st.markdown('<div class="question-card">', unsafe_allow_html=True)
     g = st.selectbox("เพศ", ["ชาย", "หญิง"])
     a = st.number_input("อายุ (ปี)", 18, 80, 30)
@@ -91,51 +111,36 @@ if st.session_state.page == 1:
         st.session_state.page = 2
         st.rerun()
 
-# --- หน้าที่ 2: ส่วนที่ 1 ---
+# --- หน้าที่ 2 ---
 elif st.session_state.page == 2:
-    st.markdown('<p style="color:#228B22; font-weight:bold; font-size:1.2rem;">🍃 ขั้นตอนที่ 2: แบบประเมินความรู้สึก (38 ข้อ)</p>', unsafe_allow_html=True)
+    st.subheader("🍃 ส่วนที่ 1: ความรู้สึก (38 ข้อ)")
     feel_res = {}
     for i, q in enumerate(p1_qs):
-        st.markdown(f'''
-            <div class="question-card">
-                <div class="question-text">{i+1}. {q}</div>
-            </div>
-        ''', unsafe_allow_html=True)
-        # ใช้ radio แบบดั้งเดิมแต่จัดให้ใช้ง่าย
-        feel_res[f"Feel_{i+1}"] = st.radio(f"radio_f{i}", [1,2,3,4,5], horizontal=True, key=f"f{i}", label_visibility="collapsed")
-        st.markdown('<div style="display:flex; justify-content:space-between; padding:0 15px 20px 15px; font-size:0.8rem; color:#888;"><span>น้อยที่สุด</span><span>มากที่สุด</span></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="question-card"><span class="q-text">{i+1}. {q}</span></div>', unsafe_allow_html=True)
+        # Radio ที่จะถูก CSS แปลงเป็นปุ่ม
+        feel_res[f"Feel_{i+1}"] = st.radio(f"f{i}", [1,2,3,4,5], horizontal=True, key=f"f{i}")
+        st.markdown('<div style="display:flex; justify-content:space-between; padding:5px 10px 20px 10px; font-size:0.8rem; color:#888;"><span>น้อยที่สุด</span><span>มากที่สุด</span></div>', unsafe_allow_html=True)
     
     c1, c2 = st.columns(2)
     with c1: 
-        if st.button("⬅️ ย้อนกลับ"):
-            st.session_state.page = 1
-            st.rerun()
+        if st.button("⬅️ ย้อนกลับ"): st.session_state.page = 1; st.rerun()
     with c2: 
-        if st.button("ถัดไป ➡️"):
-            st.session_state.p2_data = feel_res
-            st.session_state.page = 3
-            st.rerun()
+        if st.button("ถัดไป ➡️"): st.session_state.p2_data = feel_res; st.session_state.page = 3; st.rerun()
 
-# --- หน้าที่ 3: ส่วนที่ 2 ---
+# --- หน้าที่ 3 ---
 elif st.session_state.page == 3:
-    st.markdown('<p style="color:#228B22; font-weight:bold; font-size:1.2rem;">🏢 ขั้นตอนที่ 3: สิ่งที่ได้รับจากบริษัท (16 ข้อ)</p>', unsafe_allow_html=True)
+    st.subheader("🏢 ส่วนที่ 2: สิ่งที่ได้รับจากบริษัท (16 ข้อ)")
     corp_res = {}
     for i, q in enumerate(p2_qs):
-        st.markdown(f'''
-            <div class="question-card">
-                <div class="question-text">{i+1}. {q}</div>
-            </div>
-        ''', unsafe_allow_html=True)
-        corp_res[f"Corp_{i+1}"] = st.radio(f"radio_c{i}", [1,2,3,4,5], horizontal=True, key=f"c{i}", label_visibility="collapsed")
-        st.markdown('<div style="display:flex; justify-content:space-between; padding:0 15px 20px 15px; font-size:0.8rem; color:#888;"><span>น้อยที่สุด</span><span>มากที่สุด</span></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="question-card"><span class="q-text">{i+1}. {q}</span></div>', unsafe_allow_html=True)
+        corp_res[f"Corp_{i+1}"] = st.radio(f"c{i}", [1,2,3,4,5], horizontal=True, key=f"c{i}")
+        st.markdown('<div style="display:flex; justify-content:space-between; padding:5px 10px 20px 10px; font-size:0.8rem; color:#888;"><span>น้อยที่สุด</span><span>มากที่สุด</span></div>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
-        if st.button("⬅️ ย้อนกลับ"):
-            st.session_state.page = 2
-            st.rerun()
+        if st.button("⬅️ ย้อนกลับ"): st.session_state.page = 2; st.rerun()
     with c2:
-        if st.button("🚀 ส่งแบบสอบถาม"):
+        if st.button("🚀 ส่งข้อมูล"):
             final_data = {"Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
             final_data.update(st.session_state.p1_data)
             final_data.update(st.session_state.p2_data)
@@ -147,21 +152,5 @@ elif st.session_state.page == 3:
 # --- หน้าสุดท้าย ---
 elif st.session_state.page == 4:
     st.balloons()
-    st.markdown('<div class="question-card" style="text-align:center; padding:50px;">', unsafe_allow_html=True)
-    st.success("ส่งข้อมูลเรียบร้อย ขอบคุณครับ!")
-    if st.button("ทำแบบสอบถามอีกครั้ง"):
-        st.session_state.page = 1
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# --- 🔒 ADMIN PANEL ---
-st.divider()
-with st.expander("🔐 Admin Panel (HR Only)"):
-    pw = st.text_input("Password", type="password")
-    if pw == "HR1234":
-        if st.session_state.responses:
-            df = pd.DataFrame(st.session_state.responses)
-            st.write(f"📊 จำนวนผู้ตอบ: {len(df)} คน")
-            st.dataframe(df)
-            csv = df.to_csv(index=False).encode('utf-8-sig')
-            st.download_button("📥 Download Excel (CSV)", data=csv, file_name="happiness_data.csv")
+    st.markdown('<div class="question-card" style="text-align:center; padding:50px;"><h2>ขอบคุณที่ร่วมตอบแบบสอบถามครับ</h2></div>', unsafe_allow_html=True)
+    if st.button("ทำแบบสอบถามอีกครั้ง"): st.session_state.page = 1; st.rerun()
